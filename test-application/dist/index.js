@@ -259,9 +259,11 @@ exports.scheduleRun = async function (params) {
     var name = github.run_id;
 
     // wait for 5 seconds between polling state of the execution
-    var wait_interval=5;
+    var wait_interval = 5;
     // 30 minute default timeout
-    var max_wait = 1800/wait_interval;
+    var max_wait = 1800 / wait_interval;
+
+
 
     if (params.appArn && params.appFile) {
         core.setFailed("Only specify one of app_arn or app_file");
@@ -291,6 +293,11 @@ exports.scheduleRun = async function (params) {
         core.setFailed("Setting test_spec_file also requires test_spec_type");
     }
 
+
+    if (!params.location) {
+        core.setFailed("Location is required");
+    }
+
     if (params.appFile && !params.appType) {
         core.setFailed("Setting app_file also requires app_type");
     }
@@ -300,7 +307,7 @@ exports.scheduleRun = async function (params) {
     }
 
     if (params.timeout) {
-        max_wait = params.timeout/wait_interval;
+        max_wait = params.timeout / wait_interval;
     }
 
     if (params.appFile) {
@@ -311,10 +318,11 @@ exports.scheduleRun = async function (params) {
                     projectArn: params.projectArn,
                     remote_src: params.remote_src,
                     type: params.appType,
-                    file: params.appFile});
+                    file: params.appFile
+                });
             params.appArn = app.upload.arn;
         } catch (err) {
-            throw("Unable to publish app file " + params.appFile + ", " + err);
+            throw ("Unable to publish app file " + params.appFile + ", " + err);
         }
     }
 
@@ -332,10 +340,11 @@ exports.scheduleRun = async function (params) {
                     projectArn: params.projectArn,
                     remote_src: params.remote_src,
                     type: params.testSpecType,
-                    file: params.testSpecFile});
+                    file: params.testSpecFile
+                });
             params.testSpecArn = test_spec.upload.arn;
         } catch (err) {
-            throw("Unable to publish test spec file " + params.testSpecFile + ", " + err);
+            throw ("Unable to publish test spec file " + params.testSpecFile + ", " + err);
         }
     }
 
@@ -348,19 +357,41 @@ exports.scheduleRun = async function (params) {
                     projectArn: params.projectArn,
                     remote_src: params.remote_src,
                     type: params.testPackageType,
-                    file: params.testPackageFile});
+                    file: params.testPackageFile
+                });
             params.testPackageArn = test_package.upload.arn;
         } catch (err) {
-            throw("Unable to publish test package file " + params.testPackageFile + ", " + err);
+            throw ("Unable to publish test package file " + params.testPackageFile + ", " + err);
         }
     }
+
+    let latitude, longitude;
+
+    try {
+        const location = JSON.parse(params.location);
+        ({ latitude, longitude } = location);
+    } catch (err) {
+        throw new Error('Location not valid');
+    }
+
+    if (latitude == null || longitude == null) {
+        throw new Error('Latitude o longitude are required');
+    }
+    var run_params_configuration = {
+        location: {
+            latitude,
+            longitude
+        }
+    };
 
     // allow not using a custom test spec to fall back to the default
     // test environments
     var run_params_test = {
         type: params.testType,
-        testPackageArn: params.testPackageArn
+        testPackageArn: params.testPackageArn,
     }
+
+
 
     if (params.testSpecArn) {
         run_params_test.testSpecArn = params.testSpecArn
@@ -373,26 +404,27 @@ exports.scheduleRun = async function (params) {
         name: name,
         devicePoolArn: params.devicePoolArn,
         projectArn: params.projectArn,
-        test: run_params_test
+        test: run_params_test,
+        configuration: run_params_configuration
     }
 
     var run = await devicefarm.scheduleRun(run_params);
 
     var run_status;
     var i;
-    for (i=0; i<max_wait; i++){
+    for (i = 0; i < max_wait; i++) {
         run_status = await devicefarm.getRun({ arn: run.run.arn });
 
         if (run_status.run.status != "COMPLETED") {
             core.info("Run still executing, waiting: " + run_status.run.status);
-            await sleep(wait_interval*1000);
+            await sleep(wait_interval * 1000);
         } else {
             break;
         }
     }
 
-    if (i == max_wait){
-        throw("Test run timed out. Consider increasing the 'timeout' (currently " + max_wait*wait_interval +"s) parameter.");
+    if (i == max_wait) {
+        throw ("Test run timed out. Consider increasing the 'timeout' (currently " + max_wait * wait_interval + "s) parameter.");
     }
 
     if (run_status.run.result == "PASSED") {
@@ -406,20 +438,22 @@ exports.scheduleRun = async function (params) {
                 });
                 core.error(download.data);
             } catch (err) {
-                throw("Unable to download parsing data for test run failed with "
-                      + run_status.run.resultCode +
-                     ", " + err);
+                throw ("Unable to download parsing data for test run failed with "
+                    + run_status.run.resultCode +
+                    ", " + err);
             }
         }
     }
 
-    run.downloaded_artifacts = await artifacts.getArtifact({file_artifacts: params.file_artifacts,
-                                                            screenshot_artifacts: params.screenshot_artifacts,
-                                                            log_artifacts: params.log_artifacts,
-                                                            arn: run.run.arn});
+    run.downloaded_artifacts = await artifacts.getArtifact({
+        file_artifacts: params.file_artifacts,
+        screenshot_artifacts: params.screenshot_artifacts,
+        log_artifacts: params.log_artifacts,
+        arn: run.run.arn
+    });
 
     if (run_status.run.result != "PASSED") {
-        throw("Test run failed after " + i*wait_interval + " seconds with: " + run_status.run.resultCode + ". Timeout is set to " + max_wait*wait_interval);
+        throw ("Test run failed after " + i * wait_interval + " seconds with: " + run_status.run.resultCode + ". Timeout is set to " + max_wait * wait_interval);
     }
 
     return run_status;
@@ -52273,6 +52307,8 @@ params.testPackageType = core.getInput('test_package_type');
 params.devicePoolArn = core.getInput('device_pool_arn');
 params.projectArn = core.getInput('project_arn');
 params.name = core.getInput('name');
+
+params.location = core.getInput('location');
 
 params.remote_src = core.getInput('remote_src');
 params.cleanup = core.getInput('cleanup');
