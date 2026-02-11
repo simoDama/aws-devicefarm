@@ -365,15 +365,21 @@ exports.scheduleRun = async function (params) {
         }
     }
 
-
-    const location = JSON.parse(params.location);
-
-    var run_params_configuration = {
-        location: {
+    if(params.location) {
+        const location = JSON.parse(params.location);
+        params.configuration = { location: {
             latitude : location.latitude,
             longitude : location.longitude
         }
-    };
+        };
+    }
+
+    
+        
+    
+
+    
+    
 
     // allow not using a custom test spec to fall back to the default
     // test environments
@@ -392,11 +398,11 @@ exports.scheduleRun = async function (params) {
 
     var run_params = {
         appArn: params.appArn,
+        configuration: params.configuration,
         name: name,
         devicePoolArn: params.devicePoolArn,
         projectArn: params.projectArn,
         test: run_params_test,
-        configuration: run_params_configuration
     }
 
     var run = await devicefarm.scheduleRun(run_params);
