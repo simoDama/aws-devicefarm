@@ -374,7 +374,8 @@ exports.scheduleRun = async function (params) {
             longitude : location.longitude
         }
         };
-        core.info("configuration: " + params.configuration);
+        core.info("configuration-loc-1: " + params.configuration.location.latitude);
+        core.info("configuration-loc-2: " + params.configurationlocation.longitude);
     }
 
     // allow not using a custom test spec to fall back to the default
@@ -397,7 +398,6 @@ exports.scheduleRun = async function (params) {
 
     var run_params = {
         appArn: params.appArn,
-        configuration: params.configuration,
         name: name,
         devicePoolArn: params.devicePoolArn,
         projectArn: params.projectArn,
