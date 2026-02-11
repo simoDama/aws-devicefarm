@@ -367,19 +367,15 @@ exports.scheduleRun = async function (params) {
 
     if(params.location) {
         const location = JSON.parse(params.location);
+        core.info('latitude: ' + location.latitude) 
+        core.info('longitude: ' + location.longitude) 
         params.configuration = { location: {
             latitude : location.latitude,
             longitude : location.longitude
         }
         };
+        core.info("configuration: " + params.configuration);
     }
-
-    
-        
-    
-
-    
-    
 
     // allow not using a custom test spec to fall back to the default
     // test environments
@@ -395,6 +391,9 @@ exports.scheduleRun = async function (params) {
     } else {
         core.info("No test spec provided - executing with a default environment.");
     }
+
+   core.info("appArn: " + params.appArn);
+
 
     var run_params = {
         appArn: params.appArn,
