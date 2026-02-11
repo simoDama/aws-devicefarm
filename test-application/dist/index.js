@@ -375,7 +375,7 @@ exports.scheduleRun = async function (params) {
         }
         };
         core.info("configuration-loc-1: " + params.configuration.location.latitude);
-        core.info("configuration-loc-2: " + params.configurationlocation.longitude);
+        core.info("configuration-loc-2: " + params.configuration.location.longitude);
     }
 
     // allow not using a custom test spec to fall back to the default
