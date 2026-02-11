@@ -295,7 +295,7 @@ exports.scheduleRun = async function (params) {
 
 
     if (!params.latitude && !params.longitude) {
-        core.setFailed("Location is required");
+        core.setFailed("Latitude and longitude is required");
     }
 
     if (params.appFile && !params.appType) {
