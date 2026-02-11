@@ -294,8 +294,8 @@ exports.scheduleRun = async function (params) {
     }
 
 
-    if (!params.latitude && !params.longitude) {
-        core.setFailed("Latitude and longitude is required");
+    if (!params.location) {
+        core.setFailed("Location is required");
     }
 
     if (params.appFile && !params.appType) {
@@ -366,10 +366,12 @@ exports.scheduleRun = async function (params) {
     }
 
 
+    const location = JSON.parse(params.location);
+
     var run_params_configuration = {
         location: {
-            latitude : params.latitude,
-            longitude : params.longitude
+            latitude : location.latitude,
+            longitude : location.longitude
         }
     };
 
@@ -52297,8 +52299,7 @@ params.devicePoolArn = core.getInput('device_pool_arn');
 params.projectArn = core.getInput('project_arn');
 params.name = core.getInput('name');
 
-params.location = core.getInput('latitude');
-params.location = core.getInput('longitude');
+params.location = core.getInput('location');
 
 params.remote_src = core.getInput('remote_src');
 params.cleanup = core.getInput('cleanup');

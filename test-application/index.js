@@ -29,8 +29,7 @@ params.devicePoolArn = core.getInput('device_pool_arn');
 params.projectArn = core.getInput('project_arn');
 params.name = core.getInput('name');
 
-params.location = core.getInput('latitude');
-params.location = core.getInput('longitude');
+params.location = core.getInput('location');
 
 params.remote_src = core.getInput('remote_src');
 params.cleanup = core.getInput('cleanup');
